@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 사이버 러너 (AI Cyber Runner)</title>
+    <!-- 사이버펑크 및 가독성을 위한 구글 폰트 불러오기 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="appContainer">
+        <!-- 게임 헤더 HUD (게임 진행 중에만 상단에 표시) -->
+        <header id="hud" class="hidden">
+            <div class="hud-item lives-container">
+                <span class="hud-label">LIFE</span>
+                <div id="livesDisplay" class="hearts">❤️❤️❤️❤️❤️</div>
+            </div>
+            <div class="hud-item score-container">
+                <span class="hud-label">SCORE</span>
+                <span id="scoreDisplay" class="hud-value">0</span>
+            </div>
+            <div class="hud-item distance-container">
+                <span class="hud-label">DISTANCE</span>
+                <span id="distanceDisplay" class="hud-value">0m</span>
+            </div>
+            <div class="hud-item vaccine-container">
+                <span class="hud-label">VACCINE</span>
+                <span id="vaccineDisplay" class="hud-value">0</span>
+            </div>
+            <!-- 사운드 ON / OFF 토글 버튼 -->
+            <button id="btnSoundToggle" class="sound-toggle-btn" aria-label="음소거 토글">🔊 SOUND ON</button>
+        </header>
+
+        <!-- 캔버스 게임 화면 영역 -->
+        <main id="gameContainer">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <!-- 온스크린 조작 버튼 (모바일 및 터치/클릭 사용자 지원) -->
+            <div id="touchControls" class="hidden">
+                <button id="btnLeft" class="control-btn" aria-label="왼쪽 이동">◀ LEFT (A)</button>
+                <button id="btnRight" class="control-btn" aria-label="오른쪽 이동">RIGHT (D) ▶</button>
+            </div>
+        </main>
+
+        <!-- 메인 메뉴 화면 오버레이 -->
+        <div id="mainMenuOverlay" class="overlay">
+            <div class="menu-card glass-panel">
+                <h1 class="glitch-title" data-text="AI CYBER RUNNER">AI CYBER RUNNER</h1>
+                <p class="subtitle">바이러스보다 빠르게 사이버 공간을 달려라!</p>
+
+                <!-- 최고 기록 표시 -->
+                <div class="high-score-banner">
+                    🏆 TOP SCORE: <span id="mainHighScore">0</span> PTS
+                </div>
+
+                <!-- 캐릭터 선택 섹션 -->
+                <section class="character-selection">
+                    <h2>캐릭터 선택 (CHARACTER SELECT)</h2>
+                    <div class="character-cards">
+                        <!-- 삐야 (노란색) -->
+                        <div class="char-card selected" data-char="ppiya" id="charPpiya">
+                            <div class="char-img-wrapper">
+                                <img src="assets/ppiya_select.png?v=20" alt="삐야" id="imgPpiya" class="char-img">
+                            </div>
+                            <div class="char-info">
+                                <h3>삐야 (Ppiya)</h3>
+                                <span class="tag yellow">기본형 / 스피드</span>
+                                <p>밝고 귀여운 노란색 AI 병아리</p>
+                            </div>
+                        </div>
+
+                        <!-- 오르 (흰색) -->
+                        <div class="char-card" data-char="ore" id="charOre">
+                            <div class="char-img-wrapper">
+                                <img src="assets/ore_select.png?v=20" alt="오르" id="imgOre" class="char-img">
+                            </div>
+                            <div class="char-info">
+                                <h3>오르 (Ore)</h3>
+                                <span class="tag white">수호자 / 안정형</span>
+                                <p>사이버 세계를 지키는 흰색 곰</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 메인 버튼 목록 -->
+                <div class="menu-buttons">
+                    <button id="btnStartGame" class="btn btn-primary">⚡ 게임 시작 (START)</button>
+                    <button id="btnHowToPlay" class="btn btn-secondary">📖 게임 방법</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게임 방법 설명 모달 -->
+        <div id="instructionModal" class="overlay hidden">
+            <div class="modal-card glass-panel">
+                <h2>📖 게임 플레이 방법</h2>
+                <div class="instruction-content">
+                    <ul>
+                        <li><strong>조작법:</strong> 키보드 방향키 <code>←</code>, <code>→</code> 또는 <code>A</code>, <code>D</code>키로 3개 레인을 이동합니다.</li>
+                        <li><strong>자동 전진:</strong> 캐릭터는 자동으로 앞으로 달립니다.</li>
+                        <li><strong>바이러스 (🦠):</strong> 부딪히면 생명이 1개 감소하며 1초간 무적 상태가 됩니다.</li>
+                        <li><strong>백신 (💉):</strong> 먹으면 생명이 1개 회복되고 점수 +100점을 획득합니다 (최대 생명: 5개).</li>
+                        <li><strong>난이도:</strong> 거리가 멀어질수록 달리는 속도와 바이러스 등장 빈도가 늘어납니다.</li>
+                    </ul>
+                </div>
+                <button id="btnCloseInstruction" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+
+        <!-- 게임 오버 오버레이 -->
+        <div id="gameOverOverlay" class="overlay hidden">
+            <div class="menu-card glass-panel game-over-card">
+                <h1 class="danger-title">GAME OVER</h1>
+                <p class="game-over-desc">바이러스 공격으로 시스템 침식이 완료되었습니다.</p>
+
+                <div class="result-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">최종 점수</span>
+                        <span id="finalScore" class="stat-value highlight">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">이동 거리</span>
+                        <span id="finalDistance" class="stat-value">0m</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">획득 백신</span>
+                        <span id="finalVaccine" class="stat-value">0개</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">최고 기록</span>
+                        <span id="finalHighScore" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <div class="menu-buttons">
+                    <button id="btnRestart" class="btn btn-primary">🔄 다시 도전</button>
+                    <button id="btnBackToMenu" class="btn btn-secondary">🏠 메인 메뉴로</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 스크립트 연결 -->
+    <script src="game.js?v=11"></script>
+</body>
+</html>
