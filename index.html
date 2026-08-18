@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
     <!-- 사이버펑크 및 가독성을 위한 구글 폰트 불러오기 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@500;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="appContainer">
         <!-- 상단 좌측 고정 메인 메뉴 🏠 홈 아이콘 버튼 (게임 플레이 중 표시) -->
@@ -62,7 +66,7 @@
 
                 <!-- 캐릭터 선택 섹션 -->
                 <section class="character-selection">
-                    <h2>캐릭터 선택 (CHARACTER SELECT)</h2>
+                    <h2>캐릭터 선택 </h2>
                     <div class="character-cards">
                         <!-- 삐야 (노란색) -->
                         <div class="char-card selected" data-char="ppiya" id="charPpiya">
@@ -76,15 +80,15 @@
                             </div>
                         </div>
 
-                        <!-- 오르 (흰색) -->
+                        <!-- 오르 (흰색 - 5레인) -->
                         <div class="char-card" data-char="ore" id="charOre">
                             <div class="char-img-wrapper">
                                 <img src="assets/ore_select.png?v=20" alt="오르" id="imgOre" class="char-img">
                             </div>
                             <div class="char-info">
                                 <h3>오르 (Ore)</h3>
-                                <span class="tag white">수호자 / 안정형</span>
-                                <p>사이버 세계를 지키는 흰색 곰</p>
+                                <span class="tag white">수호자 / 5레인 도전</span>
+                                <p>5개 레인 사이버 트랙을 달리는 수호자 곰</p>
                             </div>
                         </div>
                     </div>
@@ -92,7 +96,7 @@
 
                 <!-- 메인 버튼 목록 -->
                 <div class="menu-buttons">
-                    <button id="btnStartGame" class="btn btn-primary">⚡ 게임 시작 (START)</button>
+                    <button id="btnStartGame" class="btn btn-primary">⚡ 게임 시작</button>
                     <button id="btnHowToPlay" class="btn btn-secondary">📖 게임 방법</button>
                 </div>
             </div>
@@ -104,7 +108,11 @@
                 <h2>📖 게임 플레이 방법</h2>
                 <div class="instruction-content">
                     <ul>
-                        <li><strong>조작법:</strong> 키보드 방향키 <code>←</code>, <code>→</code> 또는 <code>A</code>, <code>D</code>키로 3개 레인을 이동합니다.</li>
+                        <li><strong>조작법:</strong> 키보드 방향키 <code>←</code>, <code>→</code> 또는 <code>A</code>,
+                            <code>D</code>키로 이동합니다.
+                        </li>
+                        <li><strong>캐릭터 레인:</strong> 삐야는 <strong>3개 레인</strong>, 오르는 <strong>5개 레인</strong> 트랙에서 달립니다.
+                        </li>
                         <li><strong>자동 전진:</strong> 캐릭터는 자동으로 앞으로 달립니다.</li>
                         <li><strong>바이러스 (🦠):</strong> 부딪히면 생명이 1개 감소하며 1초간 무적 상태가 됩니다.</li>
                         <li><strong>백신 (💉):</strong> 먹으면 생명이 1개 회복되고 점수 +100점을 획득합니다 (최대 생명: 5개).</li>
@@ -187,4 +195,5 @@
     <!-- 게임 스크립트 연결 -->
     <script src="game.js?v=11"></script>
 </body>
+
 </html>
