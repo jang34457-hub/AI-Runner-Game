@@ -54,18 +54,85 @@ body {
 }
 
 /* ==========================================================================
-   HUD Header Style
+   Top Header Layout (스코어 박스 -> 🏠 홈 버튼 -> ⚙️ 설정 버튼 순서 배치)
    ========================================================================== */
+/* 가장 우측 ⚙️ 설정 버튼 */
+.settings-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(13, 17, 38, 0.85);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-size: 1.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-btn:hover {
+    transform: rotate(60deg) scale(1.1);
+    background: rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 25px var(--neon-cyan);
+    color: #ffffff;
+}
+
+.settings-btn:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+/* ⚙️ 설정 버튼 바로 왼쪽에 위치하는 🏠 홈 버튼 */
+.hud-home-btn {
+    position: absolute;
+    top: 15px;
+    right: 72px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(13, 17, 38, 0.85);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-size: 1.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hud-home-btn:hover {
+    transform: scale(1.1);
+    background: rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 25px var(--neon-cyan);
+    color: #ffffff;
+}
+
+.hud-home-btn:active {
+    transform: scale(0.95);
+}
+
+/* 가장 왼쪽에 위치하는 스코어 박스 HUD (우측 버튼 2개 공간 125px 확보) */
 #hud {
     position: absolute;
     top: 15px;
     left: 20px;
-    right: 20px;
+    right: 128px; /* 우측 홈 버튼 & 설정 버튼 공간 확보 */
     height: 60px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 15px;
     background: rgba(10, 14, 30, 0.75);
     backdrop-filter: blur(10px);
     border: 1px solid var(--panel-border);
@@ -100,15 +167,43 @@ body {
     letter-spacing: 2px;
 }
 
+.hud-home-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid var(--neon-cyan);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    padding: 0;
+}
+
+.hud-home-btn:hover {
+    background: rgba(0, 240, 255, 0.3);
+    color: #ffffff;
+    box-shadow: 0 0 18px var(--neon-cyan);
+    transform: scale(1.1);
+}
+
+.hud-home-btn:active {
+    transform: scale(0.95);
+}
+
 .sound-toggle-btn {
     font-family: var(--font-cyber);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--neon-cyan);
     background: rgba(0, 240, 255, 0.1);
     border: 1px solid var(--neon-cyan);
     border-radius: 6px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
@@ -120,10 +215,10 @@ body {
 }
 
 .sound-toggle-btn.muted {
-    color: var(--text-muted);
-    border-color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.05);
-    box-shadow: none;
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+    background: rgba(255, 51, 102, 0.1);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
 }
 
 /* ==========================================================================
@@ -465,3 +560,159 @@ body {
     color: var(--neon-yellow);
     font-size: 1.5rem;
 }
+
+/* ==========================================================================
+   Settings Modal & Volume Control Styles
+   ========================================================================== */
+.settings-card {
+    max-width: 500px;
+}
+
+.settings-card h2 {
+    font-family: var(--font-cyber);
+    color: var(--neon-cyan);
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.setting-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.setting-item.mute-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.setting-value {
+    font-family: var(--font-cyber);
+    font-size: 0.95rem;
+    color: var(--neon-cyan);
+    font-weight: 700;
+}
+
+/* Custom Neon Range Slider */
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    outline: none;
+    transition: background 0.2s;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--neon-cyan);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #ffffff;
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--neon-cyan);
+    border: none;
+}
+
+/* ==========================================================================
+   Responsive Mobile Media Queries (모바일 반응형 레이아웃)
+   ========================================================================== */
+@media (max-width: 650px) {
+    .settings-btn {
+        top: 10px;
+        right: 10px;
+        width: 38px;
+        height: 38px;
+        font-size: 1.2rem;
+    }
+
+    .hud-home-btn {
+        top: 10px;
+        right: 54px;
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    #hud {
+        top: 10px;
+        left: 10px;
+        right: 98px;
+        height: auto;
+        flex-wrap: wrap;
+        padding: 8px 10px;
+        gap: 4px;
+    }
+
+    .hud-item {
+        flex: 1;
+        min-width: 60px;
+    }
+
+    /* 모바일 환경: Life 수치를 스코어 박스 아래에 줄 바꿈(2행)으로 배치 */
+    .lives-container {
+        width: 100%;
+        flex: none;
+        order: 10;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px dashed rgba(0, 240, 255, 0.2);
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .lives-container .hud-label {
+        font-size: 0.7rem;
+    }
+
+    .hearts {
+        font-size: 1rem;
+    }
+}
+

@@ -12,6 +12,12 @@
 </head>
 <body>
     <div id="appContainer">
+        <!-- 상단 좌측 고정 메인 메뉴 🏠 홈 아이콘 버튼 (게임 플레이 중 표시) -->
+        <button id="btnHudHome" class="hud-home-btn hidden" aria-label="메인 메뉴로 돌아가기">🏠</button>
+
+        <!-- 상단 우측 고정 톱니바퀴 설정 버튼 -->
+        <button id="btnSettings" class="settings-btn" aria-label="사운드 및 게임 설정">⚙️</button>
+
         <!-- 게임 헤더 HUD (게임 진행 중에만 상단에 표시) -->
         <header id="hud" class="hidden">
             <div class="hud-item lives-container">
@@ -30,8 +36,6 @@
                 <span class="hud-label">VACCINE</span>
                 <span id="vaccineDisplay" class="hud-value">0</span>
             </div>
-            <!-- 사운드 ON / OFF 토글 버튼 -->
-            <button id="btnSoundToggle" class="sound-toggle-btn" aria-label="음소거 토글">🔊 SOUND ON</button>
         </header>
 
         <!-- 캔버스 게임 화면 영역 -->
@@ -108,6 +112,42 @@
                     </ul>
                 </div>
                 <button id="btnCloseInstruction" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+
+        <!-- 환경설정 및 사운드 조절 모달 오버레이 -->
+        <div id="settingsModal" class="overlay hidden">
+            <div class="modal-card glass-panel settings-card">
+                <h2>⚙️ 오디오 & 게임 설정</h2>
+                <div class="settings-content">
+                    <!-- BGM 배경음악 조절 슬라이더 -->
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <span class="setting-label">🎵 배경 음악 (BGM)</span>
+                            <span id="bgmVolumeVal" class="setting-value">70%</span>
+                        </div>
+                        <input type="range" id="bgmVolumeSlider" class="volume-slider" min="0" max="100" value="70">
+                    </div>
+
+                    <!-- SFX 효과음 조절 슬라이더 -->
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <span class="setting-label">🔊 효과음 (SFX)</span>
+                            <span id="sfxVolumeVal" class="setting-value">80%</span>
+                        </div>
+                        <input type="range" id="sfxVolumeSlider" class="volume-slider" min="0" max="100" value="80">
+                    </div>
+
+                    <!-- 마스터 음소거 토글 -->
+                    <div class="setting-item mute-item">
+                        <span class="setting-label">🔇 마스터 음소거</span>
+                        <button id="btnSettingsMute" class="sound-toggle-btn">🔊 소리 켜짐</button>
+                    </div>
+                </div>
+                <div class="menu-buttons settings-action-buttons">
+                    <button id="btnSettingsMenu" class="btn btn-secondary">🏠 메인 메뉴로</button>
+                    <button id="btnCloseSettings" class="btn btn-primary">확인 / 닫기</button>
+                </div>
             </div>
         </div>
 
