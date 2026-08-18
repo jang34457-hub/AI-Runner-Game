@@ -32,8 +32,12 @@ class SoundEngine {
     constructor() {
         /** @type {AudioContext | null} */
         this.ctx = null;
-        /** @type {boolean} 음소거 상태 여부 */
+        /** @type {boolean} 전체 음소거 여부 */
         this.isMuted = false;
+        /** @type {number} 배경 음악(BGM) 볼륨 (0.0 ~ 1.0) */
+        this.bgmVolume = 0.7;
+        /** @type {number} 효과음(SFX) 볼륨 (0.0 ~ 1.0) */
+        this.sfxVolume = 0.8;
 
         /** @type {number | null} 로비 BGM 타이머 ID */
         this.lobbyTimer = null;
@@ -47,6 +51,43 @@ class SoundEngine {
             C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
             C4: 261.63, E4: 329.63, G4: 392.00, A4: 440.00, C5: 523.25, E5: 659.25, G5: 783.99, C6: 1046.50
         };
+
+        this.loadSettings();
+    }
+
+    /**
+     * localStorage에서 사운드 설정 불러오기
+     * @returns {void}
+     */
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('ai_cyber_runner_sound_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (typeof parsed.bgmVolume === 'number') this.bgmVolume = parsed.bgmVolume;
+                if (typeof parsed.sfxVolume === 'number') this.sfxVolume = parsed.sfxVolume;
+                if (typeof parsed.isMuted === 'boolean') this.isMuted = parsed.isMuted;
+            }
+        } catch (e) {
+            console.warn('사운드 설정 로드 오류 (기본값 사용):', e);
+        }
+    }
+
+    /**
+     * localStorage에 사운드 설정 저장하기
+     * @returns {void}
+     */
+    saveSettings() {
+        try {
+            const data = {
+                bgmVolume: this.bgmVolume,
+                sfxVolume: this.sfxVolume,
+                isMuted: this.isMuted
+            };
+            localStorage.setItem('ai_cyber_runner_sound_settings', JSON.stringify(data));
+        } catch (e) {
+            console.warn('사운드 설정 저장 오류:', e);
+        }
     }
 
     /**
@@ -70,6 +111,26 @@ class SoundEngine {
     }
 
     /**
+     * 배경 음악 (BGM) 볼륨 설정
+     * @param {number} vol - 0.0 ~ 1.0 범위의 볼륨값
+     * @returns {void}
+     */
+    setBgmVolume(vol) {
+        this.bgmVolume = Math.max(0, Math.min(1, vol));
+        this.saveSettings();
+    }
+
+    /**
+     * 효과음 (SFX) 볼륨 설정
+     * @param {number} vol - 0.0 ~ 1.0 범위의 볼륨값
+     * @returns {void}
+     */
+    setSfxVolume(vol) {
+        this.sfxVolume = Math.max(0, Math.min(1, vol));
+        this.saveSettings();
+    }
+
+    /**
      * 음소거 토글
      * @returns {boolean} 토글 후 음소거 상태 (true: 음소거됨, false: 켜짐)
      */
@@ -80,6 +141,7 @@ class SoundEngine {
         } else {
             this.initCtx();
         }
+        this.saveSettings();
         return this.isMuted;
     }
 
@@ -127,8 +189,9 @@ class SoundEngine {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(lobbyNotes[noteIndex], this.ctx.currentTime);
 
-                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.9);
+                const baseGain = 0.05 * this.bgmVolume;
+                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.9);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -170,8 +233,9 @@ class SoundEngine {
                 const freq = bassLine[step % bassLine.length];
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
 
-                gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+                const baseGain = 0.08 * this.bgmVolume;
+                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -193,7 +257,7 @@ class SoundEngine {
      * @returns {void}
      */
     playHealSFX() {
-        if (this.isMuted) return;
+        if (this.isMuted || this.sfxVolume <= 0) return;
         this.initCtx();
         if (!this.ctx || this.ctx.state !== 'running') return;
 
@@ -207,8 +271,9 @@ class SoundEngine {
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
 
-                gain.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.08 + 0.2);
+                const baseGain = 0.15 * this.sfxVolume;
+                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime + idx * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + idx * 0.08 + 0.2);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -226,7 +291,7 @@ class SoundEngine {
      * @returns {void}
      */
     playObstacleSFX() {
-        if (this.isMuted) return;
+        if (this.isMuted || this.sfxVolume <= 0) return;
         this.initCtx();
         if (!this.ctx || this.ctx.state !== 'running') return;
 
@@ -238,8 +303,9 @@ class SoundEngine {
             osc.frequency.setValueAtTime(220, this.ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.3);
 
-            gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+            const baseGain = 0.25 * this.sfxVolume;
+            gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.3);
 
             osc.connect(gain);
             gain.connect(this.ctx.destination);
@@ -256,7 +322,7 @@ class SoundEngine {
      * @returns {void}
      */
     playGameOverSFX() {
-        if (this.isMuted) return;
+        if (this.isMuted || this.sfxVolume <= 0) return;
         this.initCtx();
         if (!this.ctx || this.ctx.state !== 'running') return;
 
@@ -272,8 +338,9 @@ class SoundEngine {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.15);
 
-                gain.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.15);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.15 + 0.3);
+                const baseGain = 0.15 * this.sfxVolume;
+                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime + idx * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + idx * 0.15 + 0.3);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
@@ -865,6 +932,14 @@ class GameEngine {
             mainMenu: document.getElementById('mainMenuOverlay'),
             gameOver: document.getElementById('gameOverOverlay'),
             instructionModal: document.getElementById('instructionModal'),
+            settingsModal: document.getElementById('settingsModal'),
+            bgmVolumeSlider: /** @type {HTMLInputElement} */ (document.getElementById('bgmVolumeSlider')),
+            sfxVolumeSlider: /** @type {HTMLInputElement} */ (document.getElementById('sfxVolumeSlider')),
+            bgmVolumeVal: document.getElementById('bgmVolumeVal'),
+            sfxVolumeVal: document.getElementById('sfxVolumeVal'),
+            btnSettingsMute: document.getElementById('btnSettingsMute'),
+            btnSettingsMenu: document.getElementById('btnSettingsMenu'),
+            btnHudHome: document.getElementById('btnHudHome'),
             touchControls: document.getElementById('touchControls'),
             mainHighScore: document.getElementById('mainHighScore'),
             finalScore: document.getElementById('finalScore'),
@@ -877,9 +952,56 @@ class GameEngine {
         this.soundEngine = new SoundEngine();
 
         this.initEvents();
+        this.syncSettingsUI();
         this.updateUI();
         this.showMenu(); // 메뉴 시작 및 로비 BGM 재생
         this.startLoop();
+    }
+
+    /**
+     * 진행 중인 게임 일시 정지 (Pause Game)
+     * @returns {void}
+     */
+    pauseGame() {
+        if (this.state === 'PLAYING') {
+            this.state = 'PAUSED';
+        }
+    }
+
+    /**
+     * 일시 정지된 게임 재개 (Resume Game)
+     * @returns {void}
+     */
+    resumeGame() {
+        if (this.state === 'PAUSED') {
+            this.state = 'PLAYING';
+            this.lastTime = 0; // 프레임 시간 보정 (일시 정지 동안 누적된 타임스탬프 튐 방지)
+        }
+    }
+
+    /**
+     * 사운드 설정 UI (슬라이더 및 음소거 버튼) 동기화
+     * @returns {void}
+     */
+    syncSettingsUI() {
+        const bgmPercent = Math.round(this.soundEngine.bgmVolume * 100);
+        const sfxPercent = Math.round(this.soundEngine.sfxVolume * 100);
+
+        if (this.dom.bgmVolumeSlider) this.dom.bgmVolumeSlider.value = bgmPercent.toString();
+        if (this.dom.bgmVolumeVal) this.dom.bgmVolumeVal.textContent = `${bgmPercent}%`;
+
+        if (this.dom.sfxVolumeSlider) this.dom.sfxVolumeSlider.value = sfxPercent.toString();
+        if (this.dom.sfxVolumeVal) this.dom.sfxVolumeVal.textContent = `${sfxPercent}%`;
+
+        if (this.dom.btnSettingsMute) {
+            if (this.soundEngine.isMuted) {
+                this.dom.btnSettingsMute.textContent = '🔇 전체 음소거 중';
+                this.dom.btnSettingsMute.classList.add('muted');
+            } else {
+                this.dom.btnSettingsMute.textContent = '🔊 소리 켜짐';
+                this.dom.btnSettingsMute.classList.remove('muted');
+            }
+        }
     }
 
     /**
@@ -916,8 +1038,17 @@ class GameEngine {
      * @returns {void}
      */
     initEvents() {
-        // 키보드 조작 (Left, Right, A, D)
+        // 키보드 조작 (Left, Right, A, D, Esc)
         window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // ESC 키 누를 시 설정 모달 또는 게임 설명 모달 닫기
+                if (this.dom.settingsModal && !this.dom.settingsModal.classList.contains('hidden')) {
+                    this.dom.settingsModal.classList.add('hidden');
+                    this.resumeGame();
+                }
+                this.dom.instructionModal?.classList.add('hidden');
+            }
+
             if (this.state !== 'PLAYING' || !this.player) return;
 
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -927,14 +1058,56 @@ class GameEngine {
             }
         });
 
-        // 사운드 ON / OFF 토글 버튼 이벤트
-        document.getElementById('btnSoundToggle')?.addEventListener('click', () => {
-            const isMuted = this.soundEngine.toggleMute();
-            const btn = document.getElementById('btnSoundToggle');
-            if (btn) {
-                btn.textContent = isMuted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
-                btn.classList.toggle('muted', isMuted);
+        // 톱니바퀴 설정 버튼 클릭 (게임 진행 중이면 일시 정지)
+        document.getElementById('btnSettings')?.addEventListener('click', () => {
+            this.soundEngine.initCtx();
+            if (this.state === 'PLAYING') {
+                this.pauseGame();
             }
+            this.syncSettingsUI();
+            this.dom.settingsModal?.classList.remove('hidden');
+        });
+
+        // 설정 모달 닫기 버튼 클릭 (일시 정지 상태이면 게임 재개)
+        document.getElementById('btnCloseSettings')?.addEventListener('click', () => {
+            this.dom.settingsModal?.classList.add('hidden');
+            if (this.state === 'PAUSED') {
+                this.resumeGame();
+            }
+        });
+
+        // 설정 모달 내 '메인 메뉴로' 버튼 클릭 (초기 메인 화면으로 이동)
+        document.getElementById('btnSettingsMenu')?.addEventListener('click', () => {
+            this.dom.settingsModal?.classList.add('hidden');
+            this.showMenu();
+        });
+
+        // 게임 진행 중 HUD 영역의 홈 (메인 메뉴) 버튼 클릭
+        document.getElementById('btnHudHome')?.addEventListener('click', () => {
+            this.soundEngine.initCtx();
+            this.showMenu();
+        });
+
+        // BGM 볼륨 슬라이더 체인지 이벤트
+        this.dom.bgmVolumeSlider?.addEventListener('input', (e) => {
+            const target = /** @type {HTMLInputElement} */ (e.target);
+            const val = parseFloat(target.value) / 100;
+            this.soundEngine.setBgmVolume(val);
+            this.syncSettingsUI();
+        });
+
+        // SFX 볼륨 슬라이더 체인지 이벤트
+        this.dom.sfxVolumeSlider?.addEventListener('input', (e) => {
+            const target = /** @type {HTMLInputElement} */ (e.target);
+            const val = parseFloat(target.value) / 100;
+            this.soundEngine.setSfxVolume(val);
+            this.syncSettingsUI();
+        });
+
+        // 설정 모달 내 음소거 토글 버튼
+        this.dom.btnSettingsMute?.addEventListener('click', () => {
+            this.soundEngine.toggleMute();
+            this.syncSettingsUI();
         });
 
         // 캐릭터 선택 카드 클릭
@@ -996,6 +1169,7 @@ class GameEngine {
         this.dom.mainMenu?.classList.remove('hidden');
         this.dom.gameOver?.classList.add('hidden');
         this.dom.hud?.classList.add('hidden');
+        this.dom.btnHudHome?.classList.add('hidden');
         this.dom.touchControls?.classList.add('hidden');
         if (this.dom.mainHighScore) {
             this.dom.mainHighScore.textContent = this.highScore.toLocaleString();
@@ -1024,6 +1198,7 @@ class GameEngine {
         this.dom.mainMenu?.classList.add('hidden');
         this.dom.gameOver?.classList.add('hidden');
         this.dom.hud?.classList.remove('hidden');
+        this.dom.btnHudHome?.classList.remove('hidden');
         this.dom.touchControls?.classList.remove('hidden');
 
         this.updateHUD();
@@ -1049,6 +1224,7 @@ class GameEngine {
         if (this.dom.finalHighScore) this.dom.finalHighScore.textContent = this.highScore.toLocaleString();
 
         this.dom.hud?.classList.add('hidden');
+        this.dom.btnHudHome?.classList.add('hidden');
         this.dom.touchControls?.classList.add('hidden');
         this.dom.gameOver?.classList.remove('hidden');
     }
@@ -1106,8 +1282,8 @@ class GameEngine {
      * @param {number} deltaTime - 이전 프레임으로부터의 경과 시간 (초)
      */
     update(deltaTime) {
-        // 배경 스크롤 업데이트 (어느 상태에서나 부드럽게 흐름)
-        this.bgStream.update(deltaTime, this.state === 'PLAYING' ? this.currentSpeed : 50);
+        // 배경 스크롤 업데이트 (PAUSED 상태가 아니면 부드럽게 흐름)
+        this.bgStream.update(deltaTime, this.state === 'PLAYING' ? this.currentSpeed : (this.state === 'PAUSED' ? 0 : 50));
 
         if (this.state !== 'PLAYING' || !this.player) return;
 
@@ -1205,7 +1381,7 @@ class GameEngine {
         // 배경 매트릭스 렌더링
         this.bgStream.draw(this.ctx);
 
-        if (this.state === 'PLAYING' && this.player) {
+        if ((this.state === 'PLAYING' || this.state === 'PAUSED') && this.player) {
             // 장애물 렌더링
             for (const obs of this.obstacles) {
                 obs.draw(this.ctx);
@@ -1218,6 +1394,27 @@ class GameEngine {
 
             // 플레이어 렌더링 (달리기/회복/피격 상태별 애니메이션 자산 맵 전달)
             this.player.draw(this.ctx, this.animImages);
+        }
+
+        // 일시 정지(PAUSED) 상태 시 반투명 오버레이 및 PAUSED 안내 텍스트 표시
+        if (this.state === 'PAUSED') {
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(4, 6, 16, 0.65)';
+            this.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+            this.ctx.font = 'bold 36px Orbitron, sans-serif';
+            this.ctx.fillStyle = '#00f0ff';
+            this.ctx.shadowColor = '#00f0ff';
+            this.ctx.shadowBlur = 15;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('⏸️ GAME PAUSED', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 20);
+
+            this.ctx.font = '16px Orbitron, sans-serif';
+            this.ctx.fillStyle = '#e0f7fc';
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillText('설정 창에서 나와 게임을 재개하세요', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 25);
+            this.ctx.restore();
         }
     }
 
