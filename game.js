@@ -166,90 +166,176 @@ class SoundEngine {
     }
 
     /**
-     * 1. 로비 배경 음악 (Play Lobby BGM - 사이버 앰비언트 신스)
+     * 1. 로비 배경 음악 (Play Lobby BGM)
+     * 선택된 캐릭터(삐야: 아늑한 앰비언트 / 오르: 박진감 넘치는 쾌속 템포 신스)에 따라 로비 음악을 다르게 재생합니다.
+     * @param {CharacterType} [character='ppiya'] - 선택된 캐릭터 ('ppiya' | 'ore')
      * @returns {void}
      */
-    playLobbyBGM() {
+    playLobbyBGM(character = 'ppiya') {
         if (this.isMuted) return;
         this.initCtx();
-        if (this.currentBgm === 'LOBBY') return;
+        const targetLobbyKey = `LOBBY_${character.toUpperCase()}`;
+        if (this.currentBgm === targetLobbyKey) return;
 
         this.stopBGM();
-        this.currentBgm = 'LOBBY';
+        this.currentBgm = /** @type {any} */ (targetLobbyKey);
 
-        const lobbyNotes = [this.notes.C4, this.notes.E4, this.notes.G4, this.notes.A4];
-        let noteIndex = 0;
+        if (character === 'ppiya') {
+            // 삐야 (Ppiya) 로비 BGM: 밝고 아늑한 앰비언트 신스
+            const lobbyNotes = [this.notes.C4, this.notes.E4, this.notes.G4, this.notes.A4];
+            let noteIndex = 0;
 
-        const playLobbyStep = () => {
-            if (this.isMuted || this.currentBgm !== 'LOBBY' || !this.ctx || this.ctx.state !== 'running') return;
-            try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+            const playLobbyStep = () => {
+                if (this.isMuted || this.currentBgm !== targetLobbyKey || !this.ctx || this.ctx.state !== 'running') return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(lobbyNotes[noteIndex], this.ctx.currentTime);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(lobbyNotes[noteIndex], this.ctx.currentTime);
 
-                const baseGain = 0.05 * this.bgmVolume;
-                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.9);
+                    const baseGain = 0.05 * this.bgmVolume;
+                    gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.85);
 
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
 
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.9);
+                    osc.start(this.ctx.currentTime);
+                    osc.stop(this.ctx.currentTime + 0.85);
 
-                noteIndex = (noteIndex + 1) % lobbyNotes.length;
-            } catch (e) {
-                // 오디오 생성 에러 방지
-            }
-        };
+                    noteIndex = (noteIndex + 1) % lobbyNotes.length;
+                } catch (e) {
+                    console.warn('Lobby BGM ppiya 예외 처리:', e);
+                }
+            };
 
-        this.lobbyTimer = /** @type {any} */(setInterval(playLobbyStep, 900));
+            playLobbyStep();
+            this.lobbyTimer = /** @type {any} */ (setInterval(playLobbyStep, 800));
+
+        } else {
+            // 오르 (Ore) 로비 BGM: 박진감 넘치는 하이템포 쾌속 알페지오 (220ms 템포)
+            const oreLobbyNotes = [261.63, 329.63, 392.00, 523.25, 493.88, 392.00, 329.63, 261.63]; // C4, E4, G4, C5, B4, G4, E4, C4
+            let noteIndex = 0;
+
+            const playOreLobbyStep = () => {
+                if (this.isMuted || this.currentBgm !== targetLobbyKey || !this.ctx || this.ctx.state !== 'running') return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(oreLobbyNotes[noteIndex], this.ctx.currentTime);
+
+                    const baseGain = 0.08 * this.bgmVolume;
+                    gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(this.ctx.currentTime);
+                    osc.stop(this.ctx.currentTime + 0.22);
+
+                    noteIndex = (noteIndex + 1) % oreLobbyNotes.length;
+                } catch (e) {
+                    console.warn('Lobby BGM ore 예외 처리:', e);
+                }
+            };
+
+            playOreLobbyStep();
+            this.lobbyTimer = /** @type {any} */ (setInterval(playOreLobbyStep, 220));
+        }
     }
 
     /**
-     * 2. 게임 화면 배경 음악 (Play Game BGM - 신스웨이브 업템포 무한 러닝)
+     * 2. 게임 화면 배경 음악 (Play Game BGM)
+     * 선택된 캐릭터(삐야: 경쾌한 신스웨이브 / 오르: 쾌속 박진감 테크노 드라이브)별 고유 BGM을 재생합니다.
+     * @param {CharacterType} [character='ppiya'] - 선택 캐릭터 ('ppiya' | 'ore')
      * @returns {void}
      */
-    playGameBGM() {
+    playGameBGM(character = 'ppiya') {
         if (this.isMuted) return;
         this.initCtx();
-        if (this.currentBgm === 'GAME') return;
+        const targetBgmKey = `GAME_${character.toUpperCase()}`;
+        if (this.currentBgm === targetBgmKey) return;
 
         this.stopBGM();
-        this.currentBgm = 'GAME';
+        this.currentBgm = /** @type {any} */ (targetBgmKey);
 
-        const bassLine = [this.notes.C3, this.notes.C3, this.notes.G3, this.notes.A3, this.notes.F3, this.notes.G3];
-        let step = 0;
+        if (character === 'ppiya') {
+            // 삐야 (Ppiya) BGM: 통통 튀는 업템포 신스웨이브 멜로디
+            const bassLine = [this.notes.C3, this.notes.C3, this.notes.G3, this.notes.A3, this.notes.F3, this.notes.G3];
+            let step = 0;
 
-        const playGameStep = () => {
-            if (this.isMuted || this.currentBgm !== 'GAME' || !this.ctx || this.ctx.state !== 'running') return;
-            try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+            const playGameStep = () => {
+                if (this.isMuted || !this.currentBgm.startsWith('GAME') || !this.ctx || this.ctx.state !== 'running') return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
 
-                osc.type = 'sawtooth';
-                const freq = bassLine[step % bassLine.length];
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    osc.type = 'sawtooth';
+                    const freq = bassLine[step % bassLine.length];
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
 
-                const baseGain = 0.08 * this.bgmVolume;
-                gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
+                    const baseGain = 0.08 * this.bgmVolume;
+                    gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
 
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
 
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
 
-                step++;
-            } catch (e) {
-                // 오디오 생성 에러 방지
-            }
-        };
+                    step++;
+                } catch (e) {
+                    // 사운드 방지
+                }
+            };
 
-        this.gameBgmTimer = /** @type {any} */(setInterval(playGameStep, 220));
+            this.gameBgmTimer = /** @type {any} */ (setInterval(playGameStep, 220));
+
+        } else {
+            // 오르 (Ore) BGM: 5레인 수호자 트랙에 맞춘 초고속 박진감 테크노 신스 드라이브 (130ms 쾌속 템포)
+            const oreNotes = [164.81, 196.00, 220.00, 246.94, 293.66, 329.63, 293.66, 246.94]; // E3, G3, A3, B3, D4, E4, D4, B3
+            let step = 0;
+
+            const playOreStep = () => {
+                if (this.isMuted || !this.currentBgm.startsWith('GAME') || !this.ctx || this.ctx.state !== 'running') return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const subOsc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    const freq = oreNotes[step % oreNotes.length];
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                    subOsc.type = 'square';
+                    subOsc.frequency.setValueAtTime(freq / 2, this.ctx.currentTime); // 1옥타브 하단 묵직한 오실레이터
+
+                    const baseGain = 0.07 * this.bgmVolume;
+                    gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.12);
+
+                    osc.connect(gain);
+                    subOsc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start();
+                    subOsc.start();
+                    osc.stop(this.ctx.currentTime + 0.12);
+                    subOsc.stop(this.ctx.currentTime + 0.12);
+
+                    step++;
+                } catch (e) {
+                    // 사운드 방지
+                }
+            };
+
+            this.gameBgmTimer = /** @type {any} */ (setInterval(playOreStep, 130));
+        }
     }
 
     /**
@@ -373,11 +459,12 @@ const CYBER_CODE_SNIPPETS = [
 
 /**
  * 레인의 X 좌표를 계산하는 헬퍼 함수
- * @param {number} lane - 레인 인덱스 (0, 1, 2)
+ * @param {number} lane - 레인 인덱스 (0 ~ laneCount-1)
+ * @param {number} [laneCount=3] - 총 레인 개수 (3 또는 5)
  * @returns {number} 해당 레인의 중앙 X 좌표
  */
-function getLaneX(lane) {
-    const laneWidth = CONFIG.CANVAS_WIDTH / CONFIG.LANE_COUNT;
+function getLaneX(lane, laneCount = 3) {
+    const laneWidth = CONFIG.CANVAS_WIDTH / laneCount;
     return laneWidth * lane + laneWidth / 2;
 }
 
@@ -412,30 +499,33 @@ class Player {
     /**
      * Player 생성자
      * @param {CharacterType} character - 선택된 캐릭터 코드 ('ppiya' | 'ore')
+     * @param {number} [laneCount=3] - 게임 트랙 레인 수 (3 또는 5)
      */
-    constructor(character) {
+    constructor(character, laneCount = 3) {
         /** @type {CharacterType} */
         this.character = character;
-        /** @type {number} 0: 왼쪽, 1: 중앙, 2: 오른쪽 */
-        this.lane = 1; 
+        /** @type {number} 전체 트랙 레인 수 */
+        this.laneCount = laneCount;
+        /** @type {number} 초기 시작 레인 인덱스 (중앙 레인) */
+        this.lane = Math.floor(laneCount / 2);
         /** @type {number} 현재 X 좌표 */
-        this.x = getLaneX(1);
+        this.x = getLaneX(this.lane, this.laneCount);
         /** @type {number} 목표 X 좌표 (부드러운 이동용) */
-        this.targetX = getLaneX(1);
+        this.targetX = getLaneX(this.lane, this.laneCount);
         /** @type {number} Y 좌표 (화면 하단 부근 고정) */
         this.y = 475;
         
-        // 삐야와 오르 캐릭터 간 시각적 볼륨감(사이즈) 균형 맞춤
+        // 삐야(3레인)와 오르(5레인) 캐릭터 간 크기 비율 최적화
         if (character === 'ppiya') {
             /** @type {number} 캐릭터 너비 */
             this.width = 85;
             /** @type {number} 캐릭터 높이 */
             this.height = 98;
         } else {
-            /** @type {number} 캐릭터 너비 */
-            this.width = 85;
+            /** @type {number} 캐릭터 너비 (5레인 트랙에 맞춘 슬림 조정) */
+            this.width = 75;
             /** @type {number} 캐릭터 높이 */
-            this.height = 100;
+            this.height = 92;
         }
 
         /** @type {number} 현재 생명력 */
@@ -467,9 +557,9 @@ class Player {
      */
     move(dir) {
         const nextLane = this.lane + dir;
-        if (nextLane >= 0 && nextLane < CONFIG.LANE_COUNT) {
+        if (nextLane >= 0 && nextLane < this.laneCount) {
             this.lane = nextLane;
-            this.targetX = getLaneX(this.lane);
+            this.targetX = getLaneX(this.lane, this.laneCount);
         }
     }
 
@@ -634,14 +724,17 @@ class Player {
 class Obstacle {
     /**
      * Obstacle 생성자
-     * @param {number} lane - 등장 레인 (0, 1, 2)
-     * @param {'small' | 'large' | 'fast'} type - 바이러스 형태 종류
+     * @param {number} lane - 등장 레인 인덱스
+     * @param {'small' | 'large' | 'fast'} [type='small'] - 바이러스 형태 종류
+     * @param {number} [laneCount=3] - 총 레인 개수
      */
-    constructor(lane, type = 'small') {
+    constructor(lane, type = 'small', laneCount = 3) {
         /** @type {number} */
         this.lane = lane;
         /** @type {number} */
-        this.x = getLaneX(lane);
+        this.laneCount = laneCount;
+        /** @type {number} */
+        this.x = getLaneX(lane, laneCount);
         /** @type {number} */
         this.y = -50;
         /** @type {'small' | 'large' | 'fast'} */
@@ -714,13 +807,16 @@ class Obstacle {
 class Vaccine {
     /**
      * Vaccine 생성자
-     * @param {number} lane - 백신 생성 레인 (0, 1, 2)
+     * @param {number} lane - 백신 생성 레인 인덱스
+     * @param {number} [laneCount=3] - 총 레인 개수
      */
-    constructor(lane) {
+    constructor(lane, laneCount = 3) {
         /** @type {number} */
         this.lane = lane;
         /** @type {number} */
-        this.x = getLaneX(lane);
+        this.laneCount = laneCount;
+        /** @type {number} */
+        this.x = getLaneX(lane, laneCount);
         /** @type {number} */
         this.y = -50;
         /** @type {number} */
@@ -817,19 +913,20 @@ class BackgroundStream {
     }
 
     /**
-     * 사이버 3레인 그리드 및 코드 텍스트 렌더링
+     * 사이버 레인 그리드 및 코드 텍스트 렌더링
      * @param {CanvasRenderingContext2D} ctx 
+     * @param {number} [laneCount=3] - 레인 수 (3 또는 5)
      * @returns {void}
      */
-    draw(ctx) {
-        // 1. 레인 구분선 그리기 (3레인)
-        const laneWidth = CONFIG.CANVAS_WIDTH / CONFIG.LANE_COUNT;
+    draw(ctx, laneCount = 3) {
+        // 1. 레인 구분선 동적 그리기 (laneCount 개수에 따라 세로선 구분)
+        const laneWidth = CONFIG.CANVAS_WIDTH / laneCount;
         ctx.save();
         ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
         ctx.lineWidth = 2;
         ctx.setLineDash([15, 15]);
 
-        for (let i = 1; i < CONFIG.LANE_COUNT; i++) {
+        for (let i = 1; i < laneCount; i++) {
             ctx.beginPath();
             ctx.moveTo(laneWidth * i, 0);
             ctx.lineTo(laneWidth * i, CONFIG.CANVAS_HEIGHT);
@@ -1110,7 +1207,7 @@ class GameEngine {
             this.syncSettingsUI();
         });
 
-        // 캐릭터 선택 카드 클릭
+        // 캐릭터 선택 카드 클릭 (선택 시 로비 음악 변경)
         const charPpiyaCard = document.getElementById('charPpiya');
         const charOreCard = document.getElementById('charOre');
 
@@ -1119,6 +1216,7 @@ class GameEngine {
             charPpiyaCard.classList.add('selected');
             charOreCard?.classList.remove('selected');
             this.soundEngine.initCtx();
+            this.soundEngine.playLobbyBGM('ppiya');
         });
 
         charOreCard?.addEventListener('click', () => {
@@ -1126,6 +1224,7 @@ class GameEngine {
             charOreCard.classList.add('selected');
             charPpiyaCard?.classList.remove('selected');
             this.soundEngine.initCtx();
+            this.soundEngine.playLobbyBGM('ore');
         });
 
         // 게임 시작 버튼
@@ -1162,6 +1261,15 @@ class GameEngine {
     }
 
     /**
+     * 현재 선택된 캐릭터의 트랙 레인 수 반환
+     * 삐야(ppiya): 3레인 / 오르(ore): 5레인
+     * @returns {number} 레인 수
+     */
+    get laneCount() {
+        return this.selectedCharacter === 'ore' ? 5 : 3;
+    }
+
+    /**
      * 메인 메뉴 표시 (로비 BGM 1. 재생)
      */
     showMenu() {
@@ -1175,8 +1283,8 @@ class GameEngine {
             this.dom.mainHighScore.textContent = this.highScore.toLocaleString();
         }
 
-        // 1. 로비 배경 음악 재생
-        this.soundEngine.playLobbyBGM();
+        // 1. 선택된 캐릭터에 따른 로비 배경 음악 재생
+        this.soundEngine.playLobbyBGM(this.selectedCharacter);
     }
 
     /**
@@ -1184,7 +1292,8 @@ class GameEngine {
      */
     startGame() {
         this.state = 'PLAYING';
-        this.player = new Player(this.selectedCharacter);
+        const currentLanes = this.laneCount;
+        this.player = new Player(this.selectedCharacter, currentLanes);
         this.obstacles = [];
         this.vaccines = [];
         this.distance = 0;
@@ -1203,8 +1312,8 @@ class GameEngine {
 
         this.updateHUD();
 
-        // 2. 게임 화면 배경 음악 재생
-        this.soundEngine.playGameBGM();
+        // 2. 게임 화면 배경 음악 재생 (선택된 캐릭터 고유 BGM 재생)
+        this.soundEngine.playGameBGM(this.selectedCharacter);
     }
 
     /**
@@ -1257,24 +1366,24 @@ class GameEngine {
     }
 
     /**
-     * 장애물 무작위 생성
+     * 장애물 무작위 생성 (캐릭터별 레인 수 동적 적용)
      */
     spawnObstacle() {
-        const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
+        const lane = Math.floor(Math.random() * this.laneCount);
         const rand = Math.random();
         let type = 'small';
         if (rand > 0.75) type = 'large';
         else if (rand > 0.5) type = 'fast';
 
-        this.obstacles.push(new Obstacle(lane, type));
+        this.obstacles.push(new Obstacle(lane, type, this.laneCount));
     }
 
     /**
-     * 백신 아이템 무작위 생성
+     * 백신 아이템 무작위 생성 (캐릭터별 레인 수 동적 적용)
      */
     spawnVaccine() {
-        const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
-        this.vaccines.push(new Vaccine(lane));
+        const lane = Math.floor(Math.random() * this.laneCount);
+        this.vaccines.push(new Vaccine(lane, this.laneCount));
     }
 
     /**
@@ -1378,8 +1487,8 @@ class GameEngine {
         // 캔버스 초기화
         this.ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
 
-        // 배경 매트릭스 렌더링
-        this.bgStream.draw(this.ctx);
+        // 배경 매트릭스 렌더링 (동적 레인 구분선 전달)
+        this.bgStream.draw(this.ctx, this.laneCount);
 
         if ((this.state === 'PLAYING' || this.state === 'PAUSED') && this.player) {
             // 장애물 렌더링

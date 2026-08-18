@@ -453,6 +453,7 @@ body {
     border-radius: 8px;
     border: none;
     cursor: pointer;
+    white-space: nowrap;
     transition: all 0.25s ease;
 }
 
@@ -713,6 +714,34 @@ body {
 
     .hearts {
         font-size: 1rem;
+    }
+
+    /* 모바일 글래스 패딩 및 버튼 공간 조절 */
+    .glass-panel {
+        padding: 20px 14px;
+        width: 95%;
+    }
+
+    .btn {
+        padding: 10px 14px;
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .menu-buttons {
+        gap: 8px;
+    }
+
+    .control-btn {
+        padding: 12px 6px;
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .sound-toggle-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        white-space: nowrap;
     }
 }
 
